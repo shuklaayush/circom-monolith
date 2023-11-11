@@ -16,14 +16,14 @@ template concrete(round) {
     }
 }
 
-template Num2ByteArray(n) {
+template Num2BitArrays(nLimbs, nBits) {
     signal input in;
-    signal output out[n][8];
+    signal output out[nLimbs][nBits];
     var lc1 = 0;
     var e2 = 1;
-    for (var i = 0; i < n; i++) {
-        for (var j = 0; j < 8; j++) {
-            out[i][j] <-- (in >> (8*i + j)) & 1;
+    for (var i = 0; i < nLimbs; i++) {
+        for (var j = 0; j < nBits; j++) {
+            out[i][j] <-- (in >> (nBits*i + j)) & 1;
             out[i][j] * (1 - out[i][j]) === 0;
             lc1 += out[i][j] * e2;
             e2 = e2 + e2;
@@ -33,13 +33,13 @@ template Num2ByteArray(n) {
     lc1 === in;
 }
 
-template ByteArray2Num(n) {
-    signal input in[n][8];
+template BitArrays2Num(nLimbs, nBits) {
+    signal input in[nLimbs][nBits];
     signal output out;
     var lc1 = 0;
     var e2 = 1;
-    for (var i = 0; i < n; i++) {
-        for (var j = 0; j < 8; j++) {
+    for (var i = 0; i < nLimbs; i++) {
+        for (var j = 0; j < nBits; j++) {
             lc1 += in[i][j] * e2;
             e2 = e2 + e2;
         }
@@ -48,55 +48,55 @@ template ByteArray2Num(n) {
     out <== lc1;
 }
 
-template NegateByteArray(n) {
-    signal input in[n][8];
-    signal output out[n][8];
-    for (var i = 0; i < n; i++) {
-        for (var j = 0; j < 8; j++) {
+template NegateBitArrays(nLimbs, nBits) {
+    signal input in[nLimbs][nBits];
+    signal output out[nLimbs][nBits];
+    for (var i = 0; i < nLimbs; i++) {
+        for (var j = 0; j < nBits; j++) {
             out[i][j] <== 1 - in[i][j];
         }
     }
 }
 
-template RotateByteLeft(k) {
-    signal input in[8];
-    signal output out[8];
-    for (var i = 0; i < 8; i++) {
-        out[i] <== in[(i - k + 8) % 8];
+template RotateBitArrayLeft(nBits, k) {
+    signal input in[nBits];
+    signal output out[nBits];
+    for (var i = 0; i < nBits; i++) {
+        out[i] <== in[(i - k + nBits) % nBits];
     }
 }
 
-template RotateByteArrayLeft(n, k) {
-    signal input in[n][8];
-    signal output out[n][8];
-    for (var i = 0; i < n; i++) {
-        out[i] <== RotateByteLeft(k)(in[i]);
+template RotateBitArraysLeft(nLimbs,nBits, k) {
+    signal input in[nLimbs][nBits];
+    signal output out[nLimbs][nBits];
+    for (var i = 0; i < nLimbs; i++) {
+        out[i] <== RotateBitArrayLeft(nBits, k)(in[i]);
     }
 }
 
-template AND3ByteArrays(n) {
+template AND3BitArrays(nLimbs, nBits) {
     // Assumes all are bit-arrays
-    signal input in1[n][8];
-    signal input in2[n][8];
-    signal input in3[n][8];
-    signal output out[n][8];
+    signal input in1[nLimbs][nBits];
+    signal input in2[nLimbs][nBits];
+    signal input in3[nLimbs][nBits];
+    signal output out[nLimbs][nBits];
 
-    signal tmp[n][8];
-    for (var i = 0; i < n; i++) {
-        for (var j = 0; j < 8; j++) {
+    signal tmp[nLimbs][nBits];
+    for (var i = 0; i < nLimbs; i++) {
+        for (var j = 0; j < nBits; j++) {
             tmp[i][j] <== in1[i][j] * in2[i][j];
             out[i][j] <== tmp[i][j] * in3[i][j];
         }
     }
 }
 
-template XORByteArrays(n) {
+template XORBitArrays(nLimbs, nBits) {
     // Assumes both are bit-arrays
-    signal input in1[n][8];
-    signal input in2[n][8];
-    signal output out[n][8];
-    for (var i = 0; i < n; i++) {
-        for (var j = 0; j < 8; j++) {
+    signal input in1[nLimbs][nBits];
+    signal input in2[nLimbs][nBits];
+    signal output out[nLimbs][nBits];
+    for (var i = 0; i < nLimbs; i++) {
+        for (var j = 0; j < nBits; j++) {
             out[i][j] <== in1[i][j] + in2[i][j] - 2 * in1[i][j] * in2[i][j];
         }
     }
@@ -107,33 +107,31 @@ template bar() {
     signal output limbOut;
 
     if (LOOKUP_BITS() == 8) {
-        signal limbInBytes[8][8] <== Num2ByteArray(8)(limbIn);
-        signal limbInBytesNeg[8][8] <== NegateByteArray(8)(limbInBytes);
+        signal limbInBitArrays[8][8] <== Num2BitArrays(8, 8)(limbIn);
+        signal limbInBitArraysNeg[8][8] <== NegateBitArrays(8, 8)(limbInBitArrays);
 
-        signal limbInNegRot1[8][8] <== RotateByteArrayLeft(8, 1)(limbInBytesNeg);
-        signal limbInRot2[8][8] <== RotateByteArrayLeft(8, 2)(limbInBytes);
-        signal limbInRot3[8][8] <== RotateByteArrayLeft(8, 3)(limbInBytes);
+        signal limbInNegRot1[8][8] <== RotateBitArraysLeft(8, 8, 1)(limbInBitArraysNeg);
+        signal limbInRot2[8][8] <== RotateBitArraysLeft(8, 8, 2)(limbInBitArrays);
+        signal limbInRot3[8][8] <== RotateBitArraysLeft(8, 8, 3)(limbInBitArrays);
 
-        signal tmp1[8][8] <== AND3ByteArrays(8)(limbInNegRot1, limbInRot2, limbInRot3);
-        signal tmp2[8][8] <== XORByteArrays(8)(limbInBytes, tmp1);
+        signal tmp1[8][8] <== AND3BitArrays(8, 8)(limbInNegRot1, limbInRot2, limbInRot3);
+        signal tmp2[8][8] <== XORBitArrays(8, 8)(limbInBitArrays, tmp1);
 
-        signal limbOutBytes[8][8] <== RotateByteArrayLeft(8, 1)(tmp2);
-        limbOut <== ByteArray2Num(8)(limbOutBytes);
+        signal limbOutBitArrays[8][8] <== RotateBitArraysLeft(8, 8, 1)(tmp2);
+        limbOut <== BitArrays2Num(8, 8)(limbOutBitArrays);
     } else if (LOOKUP_BITS() == 16) {
-        // TODO
-        assert(0);
+        signal limbInBitArrays[4][16] <== Num2BitArrays(4, 16)(limbIn);
+        signal limbInBitArraysNeg[4][16] <== NegateBitArrays(4, 16)(limbInBitArrays);
 
-        // let limbl1 =
-        //     ((!limb & 0x8000800080008000) >> 15) | ((!limb & 0x7FFF7FFF7FFF7FFF) << 1); // Left rotation by 1
-        // let limbl2 =
-        //     ((limb & 0xC000C000C000C000) >> 14) | ((limb & 0x3FFF3FFF3FFF3FFF) << 2); // Left rotation by 2
-        // let limbl3 =
-        //     ((limb & 0xE000E000E000E000) >> 13) | ((limb & 0x1FFF1FFF1FFF1FFF) << 3); // Left rotation by 3
+        signal limbInNegRot1[4][16] <== RotateBitArraysLeft(4, 16, 1)(limbInBitArraysNeg);
+        signal limbInRot2[4][16] <== RotateBitArraysLeft(4, 16, 2)(limbInBitArrays);
+        signal limbInRot3[4][16] <== RotateBitArraysLeft(4, 16, 3)(limbInBitArrays);
 
-        // // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
-        // let tmp = limb ^ limbl1 & limbl2 & limbl3;
-        // ((tmp & 0x8000800080008000) >> 15) | ((tmp & 0x7FFF7FFF7FFF7FFF) << 1)
-        // // Final rotation
+        signal tmp1[4][16] <== AND3BitArrays(4, 16)(limbInNegRot1, limbInRot2, limbInRot3);
+        signal tmp2[4][16] <== XORBitArrays(4, 16)(limbInBitArrays, tmp1);
+
+        signal limbOutBitArrays[4][16] <== RotateBitArraysLeft(4, 16, 1)(tmp2);
+        limbOut <== BitArrays2Num(4, 16)(limbOutBitArrays);
     } else {
         assert(0);
     }
