@@ -4,7 +4,7 @@
   "description": "Circom circuit for Monolith hash function",
   "main": "index.js",
   "scripts": {
-    "test": "NODE_OPTIONS='--max-old-space-size=560000' mocha -r ts-node/register 'test/**/*.test.ts'"
+    "test": "mocha --max-old-space-size=4000"
   },
   "license": "MIT",
   "dependencies": {
