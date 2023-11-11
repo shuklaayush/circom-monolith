@@ -1,3 +1,5 @@
+pragma circom 2.1.6;
+
 function SPONGE_RATE() {
     return 8;
 }
@@ -22,8 +24,8 @@ function LOOKUP_BITS() {
     return 8;
 }
 
-function MAT_12() {
-    return [
+function MAT_12(i, j) {
+    var mat12[SPONGE_WIDTH()][SPONGE_WIDTH()] = [
         [7, 23, 8, 26, 13, 10, 9, 7, 6, 22, 21, 8],
         [8, 7, 23, 8, 26, 13, 10, 9, 7, 6, 22, 21],
         [21, 8, 7, 23, 8, 26, 13, 10, 9, 7, 6, 22],
@@ -37,11 +39,14 @@ function MAT_12() {
         [8, 26, 13, 10, 9, 7, 6, 22, 21, 8, 7, 23],
         [23, 8, 26, 13, 10, 9, 7, 6, 22, 21, 8, 7]
     ];
+    return mat12[i][j];
 }
 
-function ROUND_CONSTANTS() {
+function ROUND_CONSTANTS(i, j) {
+    var roundConstants[N_ROUNDS() + 1][SPONGE_WIDTH()];
+
     if (LOOKUP_BITS() == 8) {
-        return [
+        roundConstants = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [
                 13596126580325903823,
@@ -116,7 +121,7 @@ function ROUND_CONSTANTS() {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
     } else if (LOOKUP_BITS() == 16) {
-        return [
+        roundConstants = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [
                 18336847912085310782,
@@ -192,18 +197,21 @@ function ROUND_CONSTANTS() {
         ];
     } else {
         assert(0);
-        return [[0]];
     }
+    return roundConstants[i][j];
 }
 
-function MDS_FREQ_BLOCK_ONE() {
-    return [16, 8, 16];
+function MDS_FREQ_BLOCK_ONE(i) {
+    var mdsFreq[3] = [16, 8, 16];
+    return mdsFreq[i];
 }
 
-function MDS_FREQ_BLOCK_TWO() {
-    return [(-1, 2), (-1, 1), (4, 8)];
+function MDS_FREQ_BLOCK_TWO(i, j) {
+    var mdsFreq[3][2] = [[-1, 2], [-1, 1], [4, 8]];
+    return mdsFreq[i][j];
 }
 
-function MDS_FREQ_BLOCK_THREE() {
-    return [-8, 1, 1];
+function MDS_FREQ_BLOCK_THREE(i) {
+    var mdsFreq[3] = [-8, 1, 1];
+    return mdsFreq[i];
 }

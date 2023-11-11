@@ -2,6 +2,10 @@
 pragma circom 2.1.6;
 include "./constants.circom";
 
+// TODO: Move to constants?
+// Order of Goldilocks field
+function Order() { return 18446744069414584321; }
+
 // Range check
 // Verifies x < 1 << N
 template LessNBits(N) {
