@@ -43,10 +43,8 @@ function MAT_12(i, j) {
 }
 
 function ROUND_CONSTANTS(i, j) {
-    var roundConstants[N_ROUNDS() + 1][SPONGE_WIDTH()];
-
     if (LOOKUP_BITS() == 8) {
-        roundConstants = [
+        var roundConstants[N_ROUNDS() + 1][SPONGE_WIDTH()] = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [
                 13596126580325903823,
@@ -120,8 +118,9 @@ function ROUND_CONSTANTS(i, j) {
             ],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
+        return roundConstants[i][j];
     } else if (LOOKUP_BITS() == 16) {
-        roundConstants = [
+        var roundConstants[N_ROUNDS() + 1][SPONGE_WIDTH()] = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             [
                 18336847912085310782,
@@ -195,10 +194,11 @@ function ROUND_CONSTANTS(i, j) {
             ],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ];
+        return roundConstants[i][j];
     } else {
         assert(0);
+        return 0;
     }
-    return roundConstants[i][j];
 }
 
 function MDS_FREQ_BLOCK_ONE(i) {
