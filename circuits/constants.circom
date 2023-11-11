@@ -1,11 +1,3 @@
-function N_ROUNDS() {
-    return 6;
-}
-
-function LOOKUP_BITS() {
-    return 8;
-}
-
 function SPONGE_RATE() {
     return 8;
 }
@@ -16,6 +8,18 @@ function SPONGE_CAPACITY() {
 
 function SPONGE_WIDTH() {
     return SPONGE_RATE() + SPONGE_CAPACITY();
+}
+
+function N_BARS() {
+    return 4;
+}
+
+function N_ROUNDS() {
+    return 6;
+}
+
+function LOOKUP_BITS() {
+    return 8;
 }
 
 function MAT_12() {
@@ -190,4 +194,16 @@ function ROUND_CONSTANTS() {
         assert(0);
         return [[0]];
     }
+}
+
+function MDS_FREQ_BLOCK_ONE() {
+    return [16, 8, 16];
+}
+
+function MDS_FREQ_BLOCK_TWO() {
+    return [(-1, 2), (-1, 1), (4, 8)];
+}
+
+function MDS_FREQ_BLOCK_THREE() {
+    return [-8, 1, 1];
 }
