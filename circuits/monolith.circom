@@ -74,6 +74,31 @@ template bricks() {
     }
 }
 
+template Monolith() {
+    signal input stateIn[SPONGE_WIDTH()];
+    signal output stateOut[SPONGE_WIDTH()];
+
+    signal tmp[N_ROUNDS][3][SPONGE_WIDTH()];
+
+    tmp[0][2] <== concrete()(stateIn);
+    for rc in 1..N_ROUNDS() {
+        tmp[rc][0] <== concrete(rc)(tmp[rc-1][2]);
+        tmp[rc][1] <== bars()(tmp[rc][0]);
+        tmp[rc][2] <== bricks()(tmp[rc][1]);
+    }
+
+    stateOut <== tmp[N_ROUNDS() - 1][2];
+}
+
+
+// fn hash_no_pad(input: &[F]) -> Self::Hash {
+//     hash_n_to_hash_no_pad::<F, Self::Permutation>(input)
+// }
+//
+// fn two_to_one(left: Self::Hash, right: Self::Hash) -> Self::Hash {
+//     compress::<F, Self::Permutation>(left, right)
+// }
+
 template Poseidon_GL(nOuts) {
     signal input in[8];
     signal input capacity[4];
