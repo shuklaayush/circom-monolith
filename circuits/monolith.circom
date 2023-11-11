@@ -6,13 +6,71 @@ include "../node_modules/circomlib/circuits/bitify.circom";
 
 template concrete(round) {
     signal input stateIn[SPONGE_WIDTH()];
-    signal input stateOut[SPONGE_WIDTH()];
+    signal output stateOut[SPONGE_WIDTH()];
 
     for row in 0..SPONGE_WIDTH() {
         for column in 0..SPONGE_WIDTH() {
             stateOut[row] += stateIn[column] * MAT_12()[row][column]; // TODO: goldilocks mul
         }
         stateOut[row] += ROUND_CONSTANTS()[round][row]; // TODO: goldilocks add
+    }
+}
+
+template bar() {
+    signal input elIn
+    signal output elOut;
+
+// TODO
+//    let limb = *el as u64;
+//    *el = match LOOKUP_BITS {
+//        8 => {
+//            let limbl1 =
+//                ((!limb & 0x8080808080808080) >> 7) | ((!limb & 0x7F7F7F7F7F7F7F7F) << 1); // Left rotation by 1
+//            let limbl2 =
+//                ((limb & 0xC0C0C0C0C0C0C0C0) >> 6) | ((limb & 0x3F3F3F3F3F3F3F3F) << 2); // Left rotation by 2
+//            let limbl3 =
+//                ((limb & 0xE0E0E0E0E0E0E0E0) >> 5) | ((limb & 0x1F1F1F1F1F1F1F1F) << 3); // Left rotation by 3
+//
+//            // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
+//            let tmp = limb ^ limbl1 & limbl2 & limbl3;
+//            ((tmp & 0x8080808080808080) >> 7) | ((tmp & 0x7F7F7F7F7F7F7F7F) << 1)
+//        }
+//        16 => {
+//            let limbl1 =
+//                ((!limb & 0x8000800080008000) >> 15) | ((!limb & 0x7FFF7FFF7FFF7FFF) << 1); // Left rotation by 1
+//            let limbl2 =
+//                ((limb & 0xC000C000C000C000) >> 14) | ((limb & 0x3FFF3FFF3FFF3FFF) << 2); // Left rotation by 2
+//            let limbl3 =
+//                ((limb & 0xE000E000E000E000) >> 13) | ((limb & 0x1FFF1FFF1FFF1FFF) << 3); // Left rotation by 3
+//
+//            // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
+//            let tmp = limb ^ limbl1 & limbl2 & limbl3;
+//            ((tmp & 0x8000800080008000) >> 15) | ((tmp & 0x7FFF7FFF7FFF7FFF) << 1)
+//            // Final rotation
+//        }
+//        _ => {
+//            panic!("Unsupported lookup size");
+//        }
+//    } as u128;
+}
+
+template bars() {
+    signal input stateIn[SPONGE_WIDTH()];
+    signal output stateOut[SPONGE_WIDTH()];
+
+    for row in 0..N_BARS() {
+        stateOut[row] <== bar()(stateIn[row]);
+    }
+}
+
+template bricks() {
+    signal input stateIn[SPONGE_WIDTH()];
+    signal output stateOut[SPONGE_WIDTH()];
+
+    for iRev in 1..SPONGE_WIDTH() {
+        var i = SPONGE_WIDTH() - iRev;
+        var prev = state[i - 1];
+        stateOut[i] <== prev * prev
     }
 }
 
