@@ -4,6 +4,7 @@ include "./constants.circom";
 include "../node_modules/circomlib/circuits/poseidon.circom";
 include "../node_modules/circomlib/circuits/bitify.circom";
 
+// TODO: Use optimized monolith_mds_12 for goldilocks
 template concrete(round) {
     signal input stateIn[SPONGE_WIDTH()];
     signal output stateOut[SPONGE_WIDTH()];
@@ -16,42 +17,134 @@ template concrete(round) {
     }
 }
 
-template bar() {
-    signal input elIn
-    signal output elOut;
+template Num2ByteArray(n) {
+    signal input in;
+    signal output out[n][8];
+    var lc1 = 0;
+    var e2 = 1;
+    for (var i = 0; i < n; i++) {
+        for (var j = 0; j < 8; j++) {
+            out[i][j] <-- (in >> i) & 1;
+            out[i][j] * (1 - out[i][j]) === 0;
+            lc1 += out[i][j] * e2;
+            e2 = e2 + e2;
+        }
+    }
 
-// TODO
-//    let limb = *el as u64;
-//    *el = match LOOKUP_BITS {
-//        8 => {
-//            let limbl1 =
-//                ((!limb & 0x8080808080808080) >> 7) | ((!limb & 0x7F7F7F7F7F7F7F7F) << 1); // Left rotation by 1
-//            let limbl2 =
-//                ((limb & 0xC0C0C0C0C0C0C0C0) >> 6) | ((limb & 0x3F3F3F3F3F3F3F3F) << 2); // Left rotation by 2
-//            let limbl3 =
-//                ((limb & 0xE0E0E0E0E0E0E0E0) >> 5) | ((limb & 0x1F1F1F1F1F1F1F1F) << 3); // Left rotation by 3
-//
-//            // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
-//            let tmp = limb ^ limbl1 & limbl2 & limbl3;
-//            ((tmp & 0x8080808080808080) >> 7) | ((tmp & 0x7F7F7F7F7F7F7F7F) << 1)
-//        }
-//        16 => {
-//            let limbl1 =
-//                ((!limb & 0x8000800080008000) >> 15) | ((!limb & 0x7FFF7FFF7FFF7FFF) << 1); // Left rotation by 1
-//            let limbl2 =
-//                ((limb & 0xC000C000C000C000) >> 14) | ((limb & 0x3FFF3FFF3FFF3FFF) << 2); // Left rotation by 2
-//            let limbl3 =
-//                ((limb & 0xE000E000E000E000) >> 13) | ((limb & 0x1FFF1FFF1FFF1FFF) << 3); // Left rotation by 3
-//
-//            // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
-//            let tmp = limb ^ limbl1 & limbl2 & limbl3;
-//            ((tmp & 0x8000800080008000) >> 15) | ((tmp & 0x7FFF7FFF7FFF7FFF) << 1)
-//            // Final rotation
-//        }
-//        _ => {
-//            panic!("Unsupported lookup size");
-//        }
-//    } as u128;
+    lc1 === in;
+}
+
+template ByteArray2Num(n) {
+    signal input in[n][8];
+    signal output out;
+    var lc1 = 0;
+    var e2 = 1;
+    for (var i = 0; i < n; i++) {
+        for (var j = 0; j < 8; j++) {
+            lc1 += in[i][j] * e2;
+            e2 = e2 + e2;
+        }
+    }
+
+    out <== lc1;
+}
+
+template Num2NegByteArray(n) {
+    signal input in;
+    signal output out[n][8];
+    var lc1 = 0;
+    var e2 = 1;
+    for (var i = 0; i < n; i++) {
+        for (var j = 0; j < 8; j++) {
+            out[i][j] <-- 1 - ((in >> i) & 1);
+            out[i][j] * (1 - out[i][j]) === 0;
+            lc1 += (1 - out[i][j]) * e2;
+            e2 = e2 + e2;
+        }
+    }
+
+    lc1 === in;
+}
+
+template RotateByteLeft(k) {
+    // TODO: Use unconstrained, assign and only constrain sum
+    signal input in[8];
+    signal output out[8];
+    for (var i = 0; i < 8; i++) {
+        out[i] <== in[(i - k) % 8];
+    }
+}
+
+template RotateByteArrayLeft(n, k) {
+    signal input in[nBytes][8];
+    signal output out[nBytes][8];
+    for (var i = 0; i < nBytes; i++) {
+        out[i] <== RotateByteLeft(k)(in[i]);
+    }
+}
+
+template AND(n) {
+    // Assumes both are bit-arrays
+    signal input in1[n];
+    signal input in2[n];
+    signal output out[n];
+    for (var i = 0; i < n; i++) {
+        out[i] <== in1[i] * in2[i];
+    }
+}
+
+template XOR(n) {
+    // Assumes both are bit-arrays
+    signal input in1[n];
+    signal input in2[n];
+    signal output out[n];
+    for (var i = 0; i < n; i++) {
+        out[i] <== in1[i] + in2[i] - 2 * in1[i] * in2[i];
+    }
+}
+
+template bar() {
+    signal input limbIn; // 64-bit input
+    signal output limbOut;
+
+    if (LOOKUP_BITS() == 8) {
+        // Split the 64-bit input into 8 8-bit limbs
+        // Take negation of each limb
+        // Rotate each byte of negation circularly by 1
+        // Rotate each byte of original by 2, 3
+        // AND the results of the two rotations
+        // XOR the result with the original
+        // Rotate the result circularly by 1
+
+        signal limbInBytes[8][8] = Num2ByteArray(8)(limbIn);
+
+        signal limbInNeg[8][8] = Num2NegByteArray(8)(limbInBytes);
+        signal limbInNegRot1[8][8] = RotateByteArrayLeft(1)(limbInNeg);
+        signal limbInRot2[8][8] = RotateByteArrayLeft(2)(limbInBytes);
+        signal limbInRot3[8][8] = RotateByteArrayLeft(3)(limbInBytes);
+
+        // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
+        signal tmp = XOR(8)(limbInBytes, AND(8)(limbInNegRot1, AND(8)(limbInRot2, limbInRot3)));
+        signal limbOutBytes = RotateByteArrayLeft(1)(tmp);
+
+        limbOut <== ByteArray2Num(8)(limbOutBytes);
+    } else (LOOKUP_BITS() == 16) {
+        // TODO
+        assert(0);
+        // let limbl1 =
+        //     ((!limb & 0x8000800080008000) >> 15) | ((!limb & 0x7FFF7FFF7FFF7FFF) << 1); // Left rotation by 1
+        // let limbl2 =
+        //     ((limb & 0xC000C000C000C000) >> 14) | ((limb & 0x3FFF3FFF3FFF3FFF) << 2); // Left rotation by 2
+        // let limbl3 =
+        //     ((limb & 0xE000E000E000E000) >> 13) | ((limb & 0x1FFF1FFF1FFF1FFF) << 3); // Left rotation by 3
+
+        // // y_i = x_i + (1 + x_{i+1}) * x_{i+2} * x_{i+3}
+        // let tmp = limb ^ limbl1 & limbl2 & limbl3;
+        // ((tmp & 0x8000800080008000) >> 15) | ((tmp & 0x7FFF7FFF7FFF7FFF) << 1)
+        // // Final rotation
+    } else {
+        assert(0);
+    }
 }
 
 template bars() {
@@ -70,7 +163,7 @@ template bricks() {
     for iRev in 1..SPONGE_WIDTH() {
         var i = SPONGE_WIDTH() - iRev;
         var prev = state[i - 1];
-        stateOut[i] <== prev * prev
+        stateOut[i] <== prev * prev; // TODO: goldilocks mul
     }
 }
 
@@ -89,7 +182,6 @@ template Monolith() {
 
     stateOut <== tmp[N_ROUNDS() - 1][2];
 }
-
 
 // fn hash_no_pad(input: &[F]) -> Self::Hash {
 //     hash_n_to_hash_no_pad::<F, Self::Permutation>(input)
