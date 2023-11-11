@@ -1,6 +1,5 @@
 // SOURCE: https://github.com/polymerdao/plonky2-circom/
 pragma circom 2.1.6;
-include "./constants.circom";
 
 // TODO: Move to constants?
 // Order of Goldilocks field
