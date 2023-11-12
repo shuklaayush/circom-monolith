@@ -24,6 +24,10 @@ function LOOKUP_BITS() {
     return 8;
 }
 
+function NUM_HASH_OUT_ELTS() {
+    return 4;
+}
+
 function MAT_12(i, j) {
     var mat12[SPONGE_WIDTH()][SPONGE_WIDTH()] = [
         [7, 23, 8, 26, 13, 10, 9, 7, 6, 22, 21, 8],

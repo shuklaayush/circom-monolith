@@ -77,19 +77,92 @@ template bricks() {
     }
 }
 
-// TODO: Rename to monolith goldilocks
 template Monolith() {
-    signal input stateIn[SPONGE_WIDTH()];
-    signal output stateOut[SPONGE_WIDTH()];
+    signal input in[SPONGE_WIDTH()];
+    signal output out[SPONGE_WIDTH()];
 
     signal tmp[N_ROUNDS() + 1][3][SPONGE_WIDTH()];
-
-    tmp[0][2] <== concrete(0)(stateIn);
+    tmp[0][2] <== concrete(0)(in);
     for (var rc = 1; rc < N_ROUNDS() + 1; rc++) {
         tmp[rc][0] <== bars()(tmp[rc-1][2]);
         tmp[rc][1] <== bricks()(tmp[rc][0]);
         tmp[rc][2] <== concrete(rc)(tmp[rc][1]);
     }
 
-    stateOut <== tmp[N_ROUNDS()][2];
+    out <== tmp[N_ROUNDS()][2];
+}
+
+template HashNToMNoPad(nInputs, nOutputs) {
+    assert(nOutputs <= SPONGE_WIDTH());
+
+    signal input in[nInputs];
+    signal output out[nOutputs];
+
+    var nHash = (nInputs + SPONGE_RATE() - 1) \ SPONGE_RATE();
+    component cMonolith[nHash];
+    component tmpHash[nHash][SPONGE_WIDTH()];
+
+    for (var i = 0; i < nHash; i++) {
+        cMonolith[i] = Monolith();
+    }
+
+    // Capacity
+    for (var j = 0; j < SPONGE_CAPACITY(); j++) {
+        cMonolith[0].in[SPONGE_RATE() + j] <== 0;
+    }
+
+    for (var i = 0; i < nHash; i++) {
+        for (var j = 0; j < SPONGE_RATE(); j++) {
+            var index = i * SPONGE_RATE() + j;
+            if (index >= nInputs) {
+                if (i > 0) {
+                  cMonolith[i].in[j] <== cMonolith[i-1].out[j];
+                } else {
+                  cMonolith[i].in[j] <== 0;
+                }
+            } else {
+                cMonolith[i].in[j] <== in[index];
+            }
+        }
+        if (i > 0) {
+            // Capacity
+            for (var j = 0; j < SPONGE_CAPACITY(); j++) {
+                cMonolith[i].in[SPONGE_RATE() + j] <== cMonolith[i - 1].out[SPONGE_RATE() + j];
+            }
+        }
+    }
+
+    for (var i = 0; i < nOutputs; i++) {
+        out[i] <== cMonolith[nHash - 1].out[i];
+    }
+}
+
+template HashNoPad(nInputs) {
+    signal input in[nInputs];
+    signal output out[NUM_HASH_OUT_ELTS()];
+
+    out <== HashNToMNoPad(nInputs, NUM_HASH_OUT_ELTS())(in);
+}
+
+template TwoToOne() {
+    assert(SPONGE_RATE() == 2*NUM_HASH_OUT_ELTS());
+
+    signal input left[NUM_HASH_OUT_ELTS()];
+    signal input right[NUM_HASH_OUT_ELTS()];
+    signal output out[NUM_HASH_OUT_ELTS()];
+
+    component monolith = Monolith();
+    for (var i = 0; i < SPONGE_WIDTH(); i++) {
+        if (i < NUM_HASH_OUT_ELTS()) {
+            monolith.in[i] <== left[i];
+        } else if (i < 2*NUM_HASH_OUT_ELTS()) {
+            monolith.in[i] <== right[i - NUM_HASH_OUT_ELTS()];
+        } else {
+            monolith.in[i] <== 0;
+        }
+    }
+
+    for (var i = 0; i < NUM_HASH_OUT_ELTS(); i++) {
+        out[i] <== monolith.out[i];
+    }
 }

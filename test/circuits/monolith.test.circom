@@ -12,9 +12,9 @@ template MonolithTest() {
     out <== 1;
 
     component monolith = Monolith();
-    monolith.stateIn <== [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    monolith.in <== [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
     if (LOOKUP_BITS() == 8) {
-        monolith.stateOut === [
+        monolith.out === [
             5867581605548782913,
             588867029099903233,
             6043817495575026667,
@@ -29,7 +29,7 @@ template MonolithTest() {
             13745376999934453119
         ];
     } else if (LOOKUP_BITS() == 16) {
-        monolith.stateOut === [
+        monolith.out === [
             15270549627416999494,
             2608801733076195295,
             2511564300649802419,
