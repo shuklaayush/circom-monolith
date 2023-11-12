@@ -15,6 +15,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Circom
+        run: |
+          wget https://github.com/iden3/circom/releases/latest/download/circom-linux-amd64 -O circom
+          chmod +x circom
+          pwd >> $GITHUB_PATH
+
       - name: Install Node
         uses: actions/setup-node@v3
         with:
