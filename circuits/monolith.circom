@@ -6,15 +6,15 @@ include "./utils.circom";
 
 // TODO: Use optimized monolith_mds_12 for goldilocks
 template concrete(round) {
-    signal input stateIn[SPONGE_WIDTH()];
-    signal output stateOut[SPONGE_WIDTH()];
+    signal input in[SPONGE_WIDTH()];
+    signal output out[SPONGE_WIDTH()];
 
     for (var row = 0; row < SPONGE_WIDTH(); row++) {
         var acc = ROUND_CONSTANTS(round, row);
         for (var column = 0; column < SPONGE_WIDTH(); column++) {
-            acc += stateIn[column] * MAT_12(row, column);
+            acc += in[column] * MAT_12(row, column);
         }
-        stateOut[row] <== GlReduce(64)(acc);
+        out[row] <== GlReduce(64)(acc);
     }
 }
 
@@ -54,26 +54,26 @@ template bar() {
 }
 
 template bars() {
-    signal input stateIn[SPONGE_WIDTH()];
-    signal output stateOut[SPONGE_WIDTH()];
+    signal input in[SPONGE_WIDTH()];
+    signal output out[SPONGE_WIDTH()];
 
     for (var row = 0; row < SPONGE_WIDTH(); row++) {
         if (row < N_BARS()) {
-            stateOut[row] <== bar()(stateIn[row]);
+            out[row] <== bar()(in[row]);
         } else {
-            stateOut[row] <== stateIn[row];
+            out[row] <== in[row];
         }
     }
 }
 
 template bricks() {
-    signal input stateIn[SPONGE_WIDTH()];
-    signal output stateOut[SPONGE_WIDTH()];
+    signal input in[SPONGE_WIDTH()];
+    signal output out[SPONGE_WIDTH()];
 
-    stateOut[0] <== stateIn[0];
+    out[0] <== in[0];
     for (var i = 1; i < SPONGE_WIDTH(); i++) {
-        var tmp = GlMul()(stateIn[i - 1], stateIn[i - 1]);
-        stateOut[i] <== stateIn[i] + tmp;
+        var tmp = GlMul()(in[i - 1], in[i - 1]);
+        out[i] <== in[i] + tmp;
     }
 }
 
