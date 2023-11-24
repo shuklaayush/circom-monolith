@@ -18,3 +18,11 @@ yarn test
 The code is based on the [reference implementation](https://github.com/HorizenLabs/monolith/tree/main) of Monolith from Horizon Labs.
 
 The implementation of the Goldilocks field is taken from [plonky2-circom](https://github.com/polymerdao/plonky2-circom/blob/main/circom/circuits/goldilocks.circom).
+
+## Disclaimer
+
+These circuits were written over a few hours during [ZK Hack Istanbul](https://www.zkistanbul.com).
+
+While they pass the test vectors and should generally be correct, they have **NOT** been formally audited. Therefore, I strongly recommend not deploying them in a production environment. There's probably also a lot of scope for optimizations to reduce the number of constraints.
+
+PRs welcome
