@@ -23,6 +23,6 @@ The implementation of the Goldilocks field is taken from [plonky2-circom](https:
 
 These circuits were written over a few hours during [ZK Hack Istanbul](https://www.zkistanbul.com).
 
-While they pass the test vectors and should generally be correct, they have **NOT** been formally audited. Therefore, I strongly recommend not deploying them in a production environment. There's probably also a lot of scope for optimizations to reduce the number of constraints.
+While they pass the test vectors and should generally be correct, they have **NOT** been formally audited. Therefore, I strongly recommend against deploying them in a production setting. There's probably also a lot of scope for optimizations to reduce the number of constraints.
 
 PRs welcome
