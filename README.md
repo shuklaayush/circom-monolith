@@ -17,12 +17,14 @@ yarn test
 
 The code is based on the [reference implementation](https://github.com/HorizenLabs/monolith/tree/main) of Monolith from Horizon Labs.
 
-The implementation of the Goldilocks field is taken from [plonky2-circom](https://github.com/polymerdao/plonky2-circom/blob/main/circom/circuits/goldilocks.circom).
+The implementation of the Goldilocks field is taken from [plonky2-circom](https://github.com/polymerdao/plonky2-circom/blob/main/circom/circuits/goldilocks.circom). 
 
 ## Disclaimer
 
 These circuits were written over a few hours during [ZK Hack Istanbul](https://www.zkistanbul.com).
 
-While they pass the test vectors and should generally be correct, they have **NOT** been formally audited. Therefore, I strongly recommend against deploying them in a production setting. There's probably also a lot of scope for optimizations to reduce the number of constraints.
+While they pass the test vectors, they have **NOT** been formally audited. Therefore, they should not be deployed in production. There's also a lot of scope for optimizations to reduce the number of constraints.
+
+The plonky2-circom Goldilocks implementation might be [underconstrained](https://github.com/polymerdao/plonky2-circom/issues/5).
 
 PRs welcome
